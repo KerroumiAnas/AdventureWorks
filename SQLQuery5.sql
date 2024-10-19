@@ -114,6 +114,15 @@ FROM Sales.vStoreWithDemographics;
 SELECT * 
 FROM Sales.vStoreWithContacts;
 
+SELECT * 
+FROM Sales.vStoreWithContacts
+WHERE [Suffix] IS NULL 
+   OR [Title] IS NULL
+   OR [FirstName] IS NULL 
+   OR [LastName] IS NULL 
+   OR [EmailAddress] IS NULL 
+   OR [PhoneNumber] IS NULL;
+
 ------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vSalesPerson;

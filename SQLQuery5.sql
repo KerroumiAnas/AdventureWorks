@@ -113,7 +113,7 @@ FROM Sales.vStoreWithDemographics;
 ----------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vStoreWithContacts;
-
+-- donnees manquantes
 SELECT * 
 FROM Sales.vStoreWithContacts
 WHERE [Suffix] IS NULL 
@@ -121,8 +121,39 @@ WHERE [Suffix] IS NULL
    OR [FirstName] IS NULL 
    OR [LastName] IS NULL 
    OR [EmailAddress] IS NULL 
+   OR [Suffix] IS NULL
+   OR [EmailAddress] IS NULL
    OR [PhoneNumber] IS NULL;
 
+UPDATE Sales.vStoreWithContacts
+SET Suffix = 'Inconnue'
+WHERE Suffix = 'N/A';
+UPDATE Sales.vStoreWithContacts
+SET MiddleName = 'Inconnue'
+WHERE MiddleName IS NULL;
+UPDATE Sales.vStoreWithContacts
+SET Title = 'N/A'
+WHERE Title IS NULL;
+
+ALTER TABLE Sales.vStoreWithContacts
+DROP COLUMN [Suffix];
+-- donnees doublantes
+
+SELECT 
+    BusinessEntityID, 
+    COUNT(*) AS DuplicateCount 
+FROM Sales.vStoreWithContacts
+GROUP BY BusinessEntityID
+HAVING COUNT(*) > 1;
+
+SELECT * 
+FROM Sales.vStoreWithContacts
+WHERE BusinessEntityID IN (
+    SELECT BusinessEntityID
+    FROM Sales.vStoreWithContacts
+    GROUP BY BusinessEntityID
+    HAVING COUNT(*) > 1
+);
 ------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vSalesPerson;

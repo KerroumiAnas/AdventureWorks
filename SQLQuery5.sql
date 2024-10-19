@@ -3,6 +3,7 @@ USE AdventureWorks2019; -- Change le nom de la base de données si nécessaire
 SELECT TABLE_NAME 
 FROM INFORMATION_SCHEMA.TABLES 
 WHERE TABLE_SCHEMA = 'Sales';
+
 ----------------------------------------------------------------------------------------------------
 --wrangling creditcard
 SELECT * 
@@ -13,9 +14,9 @@ FROM Sales.CreditCard
 WHERE [CreditCardID] IS NULL
 OR [CardType] IS NULL
 OR [CardNumber] IS NULL
-OR [ExpMonth] IS NULL
-OR [ExpYear] IS NULL
-OR [ModifiedDate] IS NULL
+--OR [ExpMonth] IS NULL
+--OR [ExpYear] IS NULL
+--OR [ModifiedDate] IS NULL
 
 -- supprimer donnees manquantes
 DELETE FROM Sales.CreditCard

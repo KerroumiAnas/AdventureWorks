@@ -157,30 +157,181 @@ WHERE BusinessEntityID IN (
 ------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vSalesPerson;
+-- donnees manquantes
+SELECT *
+FROM Sales.vSalesPerson
+WHERE TerritoryName IS NULL
+  AND TerritoryGroup IS NULL
+  AND SalesQuota IS NULL;
 
+-- UPDATE Sales.vSalesPerson
+--SET [TerritoryName] = 'Default Territory',  -- Remplace par un territoire générique ou assigné
+  --  [TerritoryGroup] = 'Default Group',
+    --[SalesQuota] = '10000'  -- Ou une autre valeur par défaut
+--WHERE [TerritoryName] IS NULL
+ -- AND [TerritoryGroup] IS NULL
+ --AND [SalesQuota] IS NULL;
+
+SELECT 
+    name AS ConstraintName, 
+    definition 
+FROM sys.check_constraints 
+WHERE parent_object_id = OBJECT_ID('Sales.SalesPerson')
+AND name = 'CK_SalesPerson_SalesQuota';
+UPDATE Sales.vSalesPerson
+SET [Suffix] = 'aucun'
+WHERE [Suffix] IS NULL;
+
+UPDATE Sales.vSalesPerson
+SET [Title] = 'aucun'
+WHERE [Title] IS NULL;
+
+UPDATE Sales.vSalesPerson
+SET [AddressLine2] = 'aucun'
+WHERE [AddressLine2] IS NULL;
+
+UPDATE Sales.vSalesPerson
+SET [MiddleName] = 'aucun'
+WHERE [MiddleName] IS NULL;
+--donnees doublantes
+
+SELECT EmailAddress, COUNT(*) AS DuplicateCount
+FROM Sales.vSalesPerson
+GROUP BY EmailAddress
+HAVING COUNT(*) > 1;
+
+SELECT PhoneNumber, COUNT(*) AS DuplicateCount
+FROM Sales.vSalesPerson
+GROUP BY PhoneNumber
+HAVING COUNT(*) > 1;
+
+SELECT BusinessEntityID, COUNT(*) AS DuplicateCount
+FROM Sales.vSalesPerson
+GROUP BY BusinessEntityID
+HAVING COUNT(*) > 1;
+
+--aucune donnees doublantes
+--donnees incorrectes
+SELECT *
+FROM Sales.vSalesPerson
+WHERE SalesQuota < 0
+   OR SalesYTD < 0
+   OR SalesLastYear < 0;
+
+SELECT *
+FROM Sales.vSalesPerson
+WHERE FirstName = ''
+   OR LastName = '';
+ --aucune formats est incorrectes
 -------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesTerritoryHistory;
 
+--cleaan
+
 ----------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vSalesPersonSalesByFiscalYears;
+--donnees manquantes
+SELECT *
+FROM Sales.vSalesPersonSalesByFiscalYears
+WHERE [FullName] IS NULL
+   OR [2002] IS NULL
+   OR [2003] IS NULL
+   OR [2004] IS NULL;
+--correction
+UPDATE Sales.vSalesPersonSalesByFiscalYears
+SET [2002] = '0'
+WHERE [2002] IS NULL;--erreur a cause de vue
+--creation d une table temporaire
+CREATE TABLE #TempSalesPersonSalesByFiscalYears (
+    SalesPersonID INT,
+    FullName NVARCHAR(100),
+    JobTitle NVARCHAR(100),
+    SalesTerritory NVARCHAR(100),
+    [2002] DECIMAL(18, 2),
+    [2003] DECIMAL(18, 2),
+    [2004] DECIMAL(18, 2)
+);
+-- Insérer les données de la vue dans la table temporaire
+INSERT INTO #TempSalesPersonSalesByFiscalYears
+SELECT * FROM vSalesPersonSalesByFiscalYears;
+
+
 
 ------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesTaxRate;
 
+
+
 -----------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.PersonCreditCard;
+
+SELECT BusinessEntityID, COUNT(CreditCardID) AS NumberOfCreditCards
+FROM Sales.PersonCreditCard
+GROUP BY BusinessEntityID;
+
+--cleean
 
 -------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesTerritory;
 
+--SELECT TerritoryID, SUM(SalesYTD) AS TotalSalesYTD
+FROM Sales.SalesTerritory
+GROUP BY TerritoryID;
+-- comparaison des ventes annee par annee
+SELECT TerritoryID, 
+       SUM(SalesYTD) AS TotalSalesYTD, 
+       SUM(SalesLastYear) AS TotalSalesLastYear
+FROM Sales.SalesTerritory
+GROUP BY TerritoryID;
+
 -------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesOrderHeader;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'SalesOrderHeader';
+
+UPDATE Sales.SalesOrderHeader
+SET Comment = 'No Comment'
+WHERE Comment IS NULL;
+
+SELECT *
+FROM Sales.SalesOrderHeader
+WHERE [SalesOrderID] IS NULL
+OR [RevisionNumber] IS NULL
+OR [OrderDate] IS NULL
+OR [DueDate] IS NULL
+OR [ShipDate] IS NULL
+OR [Status] IS NULL
+OR [OnlineOrderFlag] IS NULL
+OR [SalesOrderNumber] IS NULL
+OR [PurchaseOrderNumber] IS NULL
+OR [AccountNumber] IS NULL
+OR [CustomerID] IS NULL
+OR [SalesPersonID] IS NULL
+OR [TerritoryID] IS NULL
+OR [BillToAddressID] IS NULL
+OR [ShipToAddressID] IS NULL
+OR [ShipMethodID] IS NULL
+OR [CreditCardID] IS NULL
+OR [CreditCardApprovalCode] IS NULL
+OR [CurrencyRateID] IS NULL
+OR [SubTotal] IS NULL;
+
+UPDATE Sales.SalesOrderHeader
+SET PurchaseOrderNumber = 'N/A'
+WHERE PurchaseOrderNumber IS NULL;
+
+UPDATE Sales.SalesOrderHeader
+SET CreditCardID = '0',  
+    CreditCardApprovalCode = 'N/A' 
+WHERE CreditCardID IS NULL OR CreditCardApprovalCode IS NULL;
 
 SELECT 
     COUNT(*) AS TotalRecords,
@@ -210,13 +361,40 @@ WHERE SubTotal < 0
 SELECT * 
 FROM Sales.SalesReason;
 
+--cleaan
+
 ------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesPersonQuotaHistory;
 
+--cleaan
+
+
 ------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesOrderDetail;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'SalesOrderDetail';
+
+SELECT *
+FROM Sales.SalesOrderDetail
+WHERE CarrierTrackingNumber IS NULL;
+
+UPDATE SAles.SalesOrderDetail
+SET CarrierTrackingNumber = 'N/A'
+WHERE CarrierTrackingNumber IS NULL;
+
+--Total des Ventes par Commande
+SELECT SalesOrderID, SUM(LineTotal) AS TotalSales
+FROM Sales.SalesOrderDetail
+GROUP BY SalesOrderID;
+
+--Quantité Totale Commandée par Produit
+SELECT ProductID, SUM(OrderQty) AS TotalQuantity
+FROM Sales.SalesOrderDetail
+GROUP BY ProductID;
 
 SELECT * 
 FROM Sales.SalesOrderDetail 
@@ -234,13 +412,19 @@ UPDATE Sales.SalesOrderDetail
 SET LineTotal = OrderQty * UnitPrice
 WHERE LineTotal != OrderQty * UnitPrice;
 
+
+
 -------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesOrderHeaderSalesReason;
 
+--cleean
+
 --------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesPerson;
+
+--cleean
 
 ---------------------------------------------------------------------------------------------------------
 

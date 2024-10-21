@@ -14,9 +14,9 @@ FROM Sales.CreditCard
 WHERE [CreditCardID] IS NULL
 OR [CardType] IS NULL
 OR [CardNumber] IS NULL
---OR [ExpMonth] IS NULL
---OR [ExpYear] IS NULL
---OR [ModifiedDate] IS NULL
+OR [ExpMonth] IS NULL
+OR [ExpYear] IS NULL
+OR [ModifiedDate] IS NULL
 
 -- supprimer donnees manquantes
 DELETE FROM Sales.CreditCard

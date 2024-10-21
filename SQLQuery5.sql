@@ -361,6 +361,11 @@ WHERE SubTotal < 0
 SELECT * 
 FROM Sales.SalesReason;
 
+SELECT * 
+FROM Sales.SalesReason
+WHERE [ReasonType] IS NULL;
+
+
 --cleaan
 
 ------------------------------------------------------------------------------------------------------

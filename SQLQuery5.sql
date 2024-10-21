@@ -363,7 +363,8 @@ FROM Sales.SalesReason;
 
 SELECT * 
 FROM Sales.SalesReason
-WHERE [ReasonType] IS NULL;
+WHERE [ReasonType] IS NULL
+OR [Name] IS NULL;
 
 
 --cleaan

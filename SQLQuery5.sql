@@ -56,59 +56,218 @@ WHERE [CardType] = ''
 SELECT * 
 FROM Sales.CurrencyRate;
 
+SELECT * 
+FROM Sales.CurrencyRate
+WHERE [CurrencyRateID] IS NULL
+OR [CurrencyRateDate] IS NULL
+OR [FromCurrencyCode] IS NULL
+OR [ToCurrencyCode] IS NULL
+OR [AverageRate] IS NULL
+OR [EndOfDayRate] IS NULL
+OR [ModifiedDate] IS NULL
+
+-- supprimer donnees manquantes
+DELETE FROM Sales.CurrencyRate
+WHERE [CurrencyRateID] IS NULL
+OR [CurrencyRateDate] IS NULL
+OR [FromCurrencyCode] IS NULL
+OR [ToCurrencyCode] IS NULL
+OR [AverageRate] IS NULL
+OR [EndOfDayRate] IS NULL
+OR [ModifiedDate] IS NULL
+
+--Pour identifier les doublons
+SELECT CurrencyRateDate, FromCurrencyCode, ToCurrencyCode, AverageRate, EndOfDayRate, ModifiedDate, COUNT(*)
+FROM Sales.CurrencyRate
+GROUP BY CurrencyRateDate, FromCurrencyCode, ToCurrencyCode, AverageRate, EndOfDayRate, ModifiedDate
+HAVING COUNT(*) > 1;
+--Pour vérifier la longueur des codes des devises (ils devraient être de 3 caractères)
+SELECT *
+FROM Sales.CurrencyRate
+WHERE LEN(FromCurrencyCode) <> 3
+   OR LEN(ToCurrencyCode) <> 3;
+--Pour identifier les taux qui ne sont pas des valeurs positives (anomalie sur AverageRate ou EndOfDayRate
+SELECT *
+FROM Sales.CurrencyRate
+WHERE AverageRate <= 0
+   OR EndOfDayRate <= 0;
+--Pour identifier les dates incorrectes ou absurdes (par exemple, des dates futures pour CurrencyRateDate ou ModifiedDate)
+SELECT *
+FROM Sales.CurrencyRate
+WHERE CurrencyRateDate > GETDATE()
+   OR ModifiedDate > GETDATE();
+
+
+
 ------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.Customer
-WHERE [StoreID] IS NULL
+SELECT *
+FROM Sales.Customer
+WHERE CustomerID IS NULL
+   OR PersonID IS NULL
+   OR StoreID IS NULL
+   OR TerritoryID IS NULL
+   OR AccountNumber IS NULL
+   OR rowguid IS NULL
+   OR ModifiedDate IS NULL;
+
+ -- 1. Mettre à jour les valeurs NULL dans StoreID uniquement si elles existent dans Sales.Store
+UPDATE Sales.Customer
+SET StoreID = COALESCE(StoreID, 
+                       (SELECT TOP 1 BusinessEntityID FROM Sales.Store))  -- Remplace NULL par une valeur valide de StoreID
+WHERE StoreID IS NULL;
+
+-- 2. Mettre à jour les autres colonnes pour corriger les valeurs NULL
+UPDATE Sales.Customer
+SET PersonID = COALESCE(PersonID, -1),  -- Remplace NULL par -1 (ou une autre valeur par défaut)
+    TerritoryID = COALESCE(TerritoryID, -1), -- Remplace NULL par -1 (ou une autre valeur par défaut)
+    rowguid = COALESCE(rowguid, NEWID()), -- Remplace NULL par un nouvel identifiant unique (UUID)
+    ModifiedDate = COALESCE(ModifiedDate, GETDATE()) -- Remplace NULL par la date actuelle
+WHERE PersonID IS NULL
+   OR TerritoryID IS NULL
+   OR rowguid IS NULL
+   OR ModifiedDate IS NULL;
+ 
+ --Pour identifier les doublons dans le tableau
+ SELECT PersonID, StoreID, TerritoryID, AccountNumber, rowguid, ModifiedDate, COUNT(*)
+FROM Sales.Customer
+GROUP BY PersonID, StoreID, TerritoryID, AccountNumber, rowguid, ModifiedDate
+HAVING COUNT(*) > 1;
+--Vérification du format ou de la longueur de AccountNumber 
+SELECT *
+FROM Sales.Customer
+WHERE LEN(AccountNumber) <> 10;
+--Vérification du format de rowguid (qui doit être un identifiant UUID) :
+SELECT *
+FROM Sales.Customer
+WHERE TRY_CONVERT(uniqueidentifier, rowguid) IS NULL;
+--Vérification des dates incorrectes dans ModifiedDate
+SELECT *
+FROM Sales.Customer
+WHERE ModifiedDate > GETDATE();
+
+
+ 
 
 
 ------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.Currency;
+SELECT 
+     Name, 
+    COUNT(*) AS DuplicateCount 
+FROM  Sales.Currency
+GROUP BY  Name
+HAVING COUNT(*) > 1;
 
+--CLEAN
 ------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.CountryRegionCurrency;
+SELECT 
+    CountryRegionCode , 
+    COUNT(*) AS DuplicateCount 
+FROM  Sales.CountryRegionCurrency
+GROUP BY  CountryRegionCode
+HAVING COUNT(*) > 1;
 
-
+SELECT 
+    CurrencyCode , 
+    COUNT(*) AS DuplicateCount2
+FROM  Sales.CountryRegionCurrency
+GROUP BY  CurrencyCode
+HAVING COUNT(*) > 1;
 
 -------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.Store;
+SELECT 
+     BusinessEntityID, 
+    COUNT(*) AS DuplicateCount
+FROM  Sales.Store
+GROUP BY   BusinessEntityID
+HAVING COUNT(*) > 1;
 
+ 
+SELECT 
+     SalesPersonID, 
+    COUNT(*) AS DuplicateCount2
+FROM  Sales.Store
+GROUP BY   SalesPersonID
+HAVING COUNT(*) > 1;
+--!!!
 -------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SpecialOffer;
+ 
 
+
+
+UPDATE Sales.SpecialOffer
+SET MaxQty = 
+WHERE MaxQty IS NULL;
+
+--?????
 --------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SpecialOfferProduct;
-
+SELECT 
+     SpecialOfferID, 
+    COUNT(*) AS DuplicateCount
+FROM  Sales.SpecialOfferProduct
+GROUP BY SpecialOfferID
+HAVING COUNT(*) > 1;
+SELECT 
+     ProductID, 
+    COUNT(*) AS DuplicateCount2
+FROM  Sales.SpecialOfferProduct
+GROUP BY ProductID
+HAVING COUNT(*) > 1;
 --------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.ShoppingCartItem;
-
+--clean
 ---------------------------------------------------------------------------------------------
-SELECT * 
-FROM Sales.vPersonDemographics;
-
+ 
 
 ---------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vIndividualCustomer;
 
-
+--clean
 
 ---------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.vStoreWithAddresses;
-
-
+SELECT 
+     BusinessEntityID, 
+    COUNT(*) AS DuplicateCount
+FROM  Sales.vStoreWithAddresses
+GROUP BY BusinessEntityID
+HAVING COUNT(*) > 1;
+ SELECT 
+     Name, 
+    COUNT(*) AS DuplicateCount
+FROM  Sales.vStoreWithAddresses
+GROUP BY Name
+HAVING COUNT(*) > 1;
+SELECT 
+     CountryRegionName, 
+    COUNT(*) AS DuplicateCount
+FROM  Sales.vStoreWithAddresses
+GROUP BY CountryRegionName
+HAVING COUNT(*) > 1;
 
 
 ----------------------------------------------------------------------------------------------
-SELECT * 
-FROM Sales.vStoreWithDemographics;
+SELECT 
+    COALESCE(DateFirstPurchase, 'aucun') AS DateFirstPurchase
+   -- COALESCE(BirthDate, 'aucun') AS BirthDate,
+   -- COALESCE(MaritalStatus, 'aucun') AS MaritalStatus,
+   -- COALESCE(YearlyIncome, 'aucun') AS YearlyIncome
+    -- ajouter les autres colonnes si nécessaire
+FROM Sales.vPersonDemographics;
 
 ----------------------------------------------------------------------------------------------
 SELECT * 
@@ -363,7 +522,8 @@ FROM Sales.SalesReason;
 
 SELECT * 
 FROM Sales.SalesReason
-WHERE [ReasonType] IS NULL;
+WHERE [ReasonType] IS NULL
+OR [Name] IS NULL;
 
 
 --cleaan

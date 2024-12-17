@@ -204,9 +204,9 @@ FROM Sales.SpecialOffer;
 
 
 
-UPDATE Sales.SpecialOffer
-SET MaxQty = 
-WHERE MaxQty IS NULL;
+--UPDATE Sales.SpecialOffer
+--SET MaxQty = 
+--WHERE MaxQty IS NULL;
 
 --?????
 --------------------------------------------------------------------------------------------
@@ -258,6 +258,10 @@ SELECT
 FROM  Sales.vStoreWithAddresses
 GROUP BY CountryRegionName
 HAVING COUNT(*) > 1;
+UPDATE Sales.vStoreWithAddresses
+SET AddressLine2 = 'Inconnue'
+WHERE AddressLine2 IS NULL;
+
 
 
 ----------------------------------------------------------------------------------------------
@@ -414,7 +418,7 @@ CREATE TABLE #TempSalesPersonSalesByFiscalYears (
 );
 -- Insérer les données de la vue dans la table temporaire
 INSERT INTO #TempSalesPersonSalesByFiscalYears
-SELECT * FROM vSalesPersonSalesByFiscalYears;
+SELECT * FROM sales.vSalesPersonSalesByFiscalYears;
 
 
 
@@ -439,7 +443,7 @@ SELECT *
 FROM Sales.SalesTerritory;
 
 --SELECT TerritoryID, SUM(SalesYTD) AS TotalSalesYTD
-FROM Sales.SalesTerritory
+SELECT*FROM Sales.SalesTerritory
 GROUP BY TerritoryID;
 -- comparaison des ventes annee par annee
 SELECT TerritoryID, 
@@ -592,11 +596,143 @@ FROM Sales.SalesPerson;
 --cleean
 
 ---------------------------------------------------------------------------------------------------------
+SELECT * 
+FROM Sales.SalesOrderDetail;
+
+SELECT * 
+FROM Sales.SalesOrderDetail 
+WHERE ProductID IS NULL OR OrderQty IS NULL OR LineTotal IS NULL;
+
+-- quantite et somme des produits les plus vemdus
+
+SELECT 
+    ProductID, 
+    SUM(OrderQty) AS TotalQuantitySold,
+    SUM(LineTotal) AS TotalRevenue
+FROM sales.SalesOrderDetail
+GROUP BY ProductID
+ORDER BY TotalRevenue DESC;
+
+-- l ajout des colones "TotalQuantitySold" et " TotalRevenue"
+ALTER TABLE Sales.SalesOrderDetail
+ADD TotalQuantitySold INT DEFAULT 0, -- Quantité totale vendue (entier)
+    TotalRevenue DECIMAL(18, 2) DEFAULT 0; -- Revenu total (décimal)
+
+UPDATE sod
+SET 
+    sod.TotalQuantitySold = (
+        SELECT SUM(OrderQty)
+        FROM sales.SalesOrderDetail
+        WHERE ProductID = sod.ProductID
+    ),
+    sod.TotalRevenue = (
+        SELECT SUM(LineTotal)
+        FROM sales.SalesOrderDetail
+        WHERE ProductID = sod.ProductID
+    )
+FROM sales.SalesOrderDetail sod;
+
+--------------------------------------------------------------------------------
+SELECT * 
+FROM Sales.SalesOrderHeader;
+
+SELECT * 
+FROM Sales.SalesPerson;
+
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'Sales'  -- Le schéma de la table
+  AND TABLE_NAME = 'SalesPerson';  -- Le nom de la table
+
+  SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'Sales'  -- Le schéma de la table
+  AND TABLE_NAME = 'SalesOrderHeader';  -- Le nom de la table
 
 
+  SELECT 
+    soh.SalesPersonID,                    -- Identifiant du commercial
+    COUNT(soh.SalesOrderID) AS NumberOfSales   -- Nombre de ventes pour chaque commercial
+FROM 
+    sales.SalesOrderHeader soh
+            -- Vous pouvez ajouter une condition pour ne considérer que les commandes confirmées
+GROUP BY 
+    soh.SalesPersonID                    -- Grouper les résultats par commercial (SalesPersonID)
+ORDER BY 
+    NumberOfSales DESC; 
 
+CREATE VIEW Sales.SalesPersonKPIs AS
+SELECT 
+    soh.SalesPersonID,                                        -- Identifiant du commercial
+    COUNT(soh.SalesOrderID) AS NumberOfSales,                   -- Nombre de ventes par commercial
+    SUM(soh.TotalDue) AS RevenueGenerated                       -- Revenu généré par commercial (TotalDue correspond au montant total dû)
+FROM 
+    sales.SalesOrderHeader soh
+                                 -- Filtrer sur les commandes confirmées (à ajuster si nécessaire)
+GROUP BY 
+    soh.SalesPersonID;
 
+SELECT * FROM SalesPersonKPIs;
 
+  -----------------------------------------------------------------------------
+  --territory
 
+  SELECT * FROM Sales.SalesTerritory;
+--  les revenus actuels par territoire
+  SELECT 
+    Name AS TerritoryName,
+    SalesYTD AS CurrentYearRevenue
+FROM 
+    Sales.SalesTerritory
+ORDER BY 
+    CurrentYearRevenue DESC;
+	-- la croissance des ventes (Année sur Année)
+SELECT 
+    Name AS TerritoryName,
+    SalesYTD,
+    SalesLastYear,
+    ((SalesYTD - SalesLastYear) * 100.0 / SalesLastYear) AS GrowthRate
+FROM 
+    Sales.SalesTerritory
+WHERE 
+    SalesLastYear > 0 -- Éviter les divisions par zéro
+ORDER BY 
+    GrowthRate DESC;
 
+-- la contribution au revenu total par territoire
+SELECT 
+    Name AS TerritoryName,
+    SalesYTD,
+    (SalesYTD * 100.0 / SUM(SalesYTD) OVER ()) AS RevenueContributionPercentage
+FROM 
+    Sales.SalesTerritory
+ORDER BY 
+    RevenueContributionPercentage DESC;
+
+-- ajout de deux colones GrowthRate ; RevenueContributionPercentage
+ALTER TABLE Sales.SalesTerritory
+ADD 
+    GrowthRate DECIMAL(18, 2),  -- Croissance des Ventes (Année sur Année)
+    RevenueContributionPercentage DECIMAL(18, 2);  -- Contribution au Revenu Total par Territoire
+
+-- attribue le resultat de la colone GrowthRate
+	UPDATE Sales.SalesTerritory
+SET 
+    GrowthRate = ((SalesYTD - SalesLastYear) * 100.0 / NULLIF(SalesLastYear, 0))
+WHERE 
+    SalesLastYear > 0;
+
+	-- attribue le resultat de la colone RevenueContributionPercentage 
+WITH TotalSales AS (
+    SELECT SUM(SalesYTD) AS TotalSalesYTD
+    FROM Sales.SalesTerritory
+)
+UPDATE Sales.SalesTerritory
+SET 
+    RevenueContributionPercentage = (SalesYTD * 100.0 / (SELECT TotalSalesYTD FROM TotalSales))
+WHERE 
+    SalesYTD > 0;
+
+SELECT * FROM Sales.Customer;
+SELECT * FROM Sales.SalesOrderHeader;
 

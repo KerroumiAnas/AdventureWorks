@@ -147,6 +147,12 @@ SELECT *
 FROM Sales.Customer
 WHERE ModifiedDate > GETDATE();
 
+-------
+ ALTER TABLE Sales.Customer
+DROP COLUMN CustomerAcquisitionCost;
+
+
+
 
  
 
@@ -204,9 +210,9 @@ FROM Sales.SpecialOffer;
 
 
 
---UPDATE Sales.SpecialOffer
---SET MaxQty = 
---WHERE MaxQty IS NULL;
+UPDATE Sales.SpecialOffer
+SET MaxQty = 
+WHERE MaxQty IS NULL;
 
 --?????
 --------------------------------------------------------------------------------------------
@@ -258,10 +264,6 @@ SELECT
 FROM  Sales.vStoreWithAddresses
 GROUP BY CountryRegionName
 HAVING COUNT(*) > 1;
-UPDATE Sales.vStoreWithAddresses
-SET AddressLine2 = 'Inconnue'
-WHERE AddressLine2 IS NULL;
-
 
 
 ----------------------------------------------------------------------------------------------
@@ -418,7 +420,7 @@ CREATE TABLE #TempSalesPersonSalesByFiscalYears (
 );
 -- Insérer les données de la vue dans la table temporaire
 INSERT INTO #TempSalesPersonSalesByFiscalYears
-SELECT * FROM sales.vSalesPersonSalesByFiscalYears;
+SELECT * FROM vSalesPersonSalesByFiscalYears;
 
 
 
@@ -443,7 +445,7 @@ SELECT *
 FROM Sales.SalesTerritory;
 
 --SELECT TerritoryID, SUM(SalesYTD) AS TotalSalesYTD
-SELECT*FROM Sales.SalesTerritory
+FROM Sales.SalesTerritory
 GROUP BY TerritoryID;
 -- comparaison des ventes annee par annee
 SELECT TerritoryID, 
@@ -453,72 +455,174 @@ FROM Sales.SalesTerritory
 GROUP BY TerritoryID;
 
 -------------------------------------------------------------------------------------------------------
-SELECT * 
+
+-- 1. Ajouter la colonne TotalRevenue dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD TotalRevenue DECIMAL(18, 2);
+
+-- 2. Calculer et insérer le chiffre d'affaires total dans la colonne TotalRevenue
+WITH TotalRevenueCalculation AS (
+    SELECT 
+        SalesOrderID,
+        SUM(SubTotal) OVER () AS TotalRevenue -- Calcule la somme de SubTotal pour toutes les lignes
+    FROM 
+        Sales.SalesOrderHeader
+)
+UPDATE Sales.SalesOrderHeader
+SET TotalRevenue = TotalRevenueCalculation.TotalRevenue
+FROM TotalRevenueCalculation
+WHERE Sales.SalesOrderHeader.SalesOrderID = TotalRevenueCalculation.SalesOrderID;
+
+-- 3. Vérification des résultats
+SELECT SalesOrderID, SubTotal, TotalRevenue
 FROM Sales.SalesOrderHeader;
 
-SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'SalesOrderHeader';
-
+------
+-- Ajouter une nouvelle colonne 'TotalOrders' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD TotalOrders INT;
+-- Calculer le nombre total de commandes et mettre à jour la colonne TotalOrders
+WITH OrderCount AS (
+    SELECT COUNT(SalesOrderID) AS TotalOrders
+    FROM Sales.SalesOrderHeader
+)
 UPDATE Sales.SalesOrderHeader
-SET Comment = 'No Comment'
-WHERE Comment IS NULL;
+SET TotalOrders = (SELECT TotalOrders FROM OrderCount);
 
-SELECT *
-FROM Sales.SalesOrderHeader
-WHERE [SalesOrderID] IS NULL
-OR [RevisionNumber] IS NULL
-OR [OrderDate] IS NULL
-OR [DueDate] IS NULL
-OR [ShipDate] IS NULL
-OR [Status] IS NULL
-OR [OnlineOrderFlag] IS NULL
-OR [SalesOrderNumber] IS NULL
-OR [PurchaseOrderNumber] IS NULL
-OR [AccountNumber] IS NULL
-OR [CustomerID] IS NULL
-OR [SalesPersonID] IS NULL
-OR [TerritoryID] IS NULL
-OR [BillToAddressID] IS NULL
-OR [ShipToAddressID] IS NULL
-OR [ShipMethodID] IS NULL
-OR [CreditCardID] IS NULL
-OR [CreditCardApprovalCode] IS NULL
-OR [CurrencyRateID] IS NULL
-OR [SubTotal] IS NULL;
-
+----
+-- Ajouter une nouvelle colonne 'AverageOrderValue' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD AverageOrderValue DECIMAL(18, 2);
+-- Calculer la valeur moyenne d'une commande et mettre à jour la colonne AverageOrderValue
+WITH AverageOrderCalculation AS (
+    SELECT 
+        SUM(SubTotal) / COUNT(SalesOrderID) AS AverageOrderValue -- Calcul de la moyenne
+    FROM 
+        Sales.SalesOrderHeader
+)
 UPDATE Sales.SalesOrderHeader
-SET PurchaseOrderNumber = 'N/A'
-WHERE PurchaseOrderNumber IS NULL;
+SET AverageOrderValue = (SELECT AverageOrderValue FROM AverageOrderCalculation);
+-----
+-- Ajouter une nouvelle colonne 'SalesGrowthPercentage' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD SalesGrowthPercentage DECIMAL(18, 2);
+-- 1. Ajouter une colonne pour stocker la croissance des ventes
+ALTER TABLE Sales.SalesOrderHeader
+ADD SalesGrowthPercentage DECIMAL(18, 2);
 
+-- 2. Calcul de la croissance des ventes par mois et mise à jour de la colonne
+WITH SalesPeriod AS (
+    SELECT 
+        YEAR(OrderDate) AS OrderYear,  
+        MONTH(OrderDate) AS OrderMonth,  
+        SUM(SubTotal) AS SalesAmount
+    FROM Sales.SalesOrderHeader
+    GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+),
+SalesGrowthCalculation AS (
+    SELECT 
+        sp1.OrderYear,
+        sp1.OrderMonth,
+        sp1.SalesAmount AS CurrentPeriodSales,
+        COALESCE(sp2.SalesAmount, 0) AS PreviousPeriodSales,
+        CASE 
+            WHEN COALESCE(sp2.SalesAmount, 0) = 0 THEN NULL  -- Eviter la division par zéro
+            ELSE (sp1.SalesAmount - sp2.SalesAmount) / sp2.SalesAmount * 100
+        END AS SalesGrowthPercentage
+    FROM SalesPeriod sp1
+    LEFT JOIN SalesPeriod sp2 
+        ON sp1.OrderYear = sp2.OrderYear 
+        AND sp1.OrderMonth = sp2.OrderMonth + 1  -- Mois précédent
+)
 UPDATE Sales.SalesOrderHeader
-SET CreditCardID = '0',  
-    CreditCardApprovalCode = 'N/A' 
-WHERE CreditCardID IS NULL OR CreditCardApprovalCode IS NULL;
+SET SalesGrowthPercentage = (
+    SELECT SalesGrowthPercentage
+    FROM SalesGrowthCalculation
+    WHERE Sales.SalesOrderHeader.OrderDate >= DATEFROMPARTS(SalesGrowthCalculation.OrderYear, SalesGrowthCalculation.OrderMonth, 1)
+    AND Sales.SalesOrderHeader.OrderDate < DATEADD(MONTH, 1, DATEFROMPARTS(SalesGrowthCalculation.OrderYear, SalesGrowthCalculation.OrderMonth, 1))
+);
+--------
+ALTER TABLE Sales.SalesOrderHeader
+ADD ActiveCustomers INT;
+WITH ActiveCustomersCalculation AS (
+    SELECT DISTINCT CustomerID
+    FROM Sales.SalesOrderHeader
+    WHERE OrderDate >= DATEADD(MONTH, -12, GETDATE())  -- Clients ayant passé une commande dans les 12 derniers mois
+)
+UPDATE Sales.SalesOrderHeader
+SET ActiveCustomers = (
+    SELECT COUNT(*) FROM ActiveCustomersCalculation WHERE Sales.SalesOrderHeader.CustomerID = ActiveCustomersCalculation.CustomerID
+);
 
-SELECT 
-    COUNT(*) AS TotalRecords,
-    COUNT(OrderDate) AS RecordsWithOrderDate,
-    COUNT(CustomerID) AS RecordsWithCustomerID,
-    COUNT(ShipMethodID) AS RecordsWithShipMethod
-FROM Sales.SalesOrderHeader;
+-----
+ALTER TABLE Sales.SalesOrderHeader
+ADD NumberOfOrders INT;
 
-SELECT 
-    SalesOrderID, 
-    COUNT(*) AS DuplicateCount 
-FROM Sales.SalesOrderHeader 
-GROUP BY SalesOrderID 
-HAVING COUNT(*) > 1;
+WITH CustomerOrders AS (
+    SELECT 
+        CustomerID, 
+        COUNT(SalesOrderID) AS NumberOfOrders
+    FROM 
+        Sales.SalesOrderHeader
+    GROUP BY 
+        CustomerID
+)
+UPDATE Sales.SalesOrderHeader
+SET NumberOfOrders = CustomerOrders.NumberOfOrders
+FROM CustomerOrders
+WHERE Sales.SalesOrderHeader.CustomerID = CustomerOrders.CustomerID;
 
-SELECT * 
-FROM Sales.SalesOrderHeader 
-WHERE OrderDate IS NULL OR OrderDate > GETDATE();
+ -----
+ ALTER TABLE Sales.SalesOrderHeader
+DROP COLUMN ActiveCustomers;
+------
+ALTER TABLE Sales.SalesOrderHeader
+ADD CustomerLifetimeValue DECIMAL(18, 2);
 
-SELECT * 
-FROM Sales.SalesOrderHeader 
-WHERE SubTotal < 0 
-   OR TaxAmt < 0 
-   OR Freight < 0;
+WITH CLV_Calculation AS (
+    SELECT 
+        CustomerID,
+        SUM(TotalDue) AS CustomerLifetimeValue
+    FROM 
+        Sales.SalesOrderHeader
+    GROUP BY 
+        CustomerID
+)
+UPDATE Sales.SalesOrderHeader
+SET CustomerLifetimeValue = CLV_Calculation.CustomerLifetimeValue
+FROM CLV_Calculation
+WHERE Sales.SalesOrderHeader.CustomerID = CLV_Calculation.CustomerID;
+-----------------------
+ -- 1. Ajouter une colonne Taux de fidélité client dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD CustomerLoyaltyRate DECIMAL(5, 2);
+ -- Calculer et mettre à jour le taux de fidélité pour chaque client
+WITH CustomerOrders AS (
+    SELECT 
+        CustomerID, 
+        COUNT(SalesOrderID) AS NumberOfOrders  -- Nombre de commandes pour chaque client
+    FROM 
+        Sales.SalesOrderHeader
+    GROUP BY 
+        CustomerID
+),
+TotalCustomers AS (
+    SELECT COUNT(DISTINCT CustomerID) AS TotalClients  -- Nombre total de clients
+    FROM Sales.SalesOrderHeader
+)
+UPDATE Sales.SalesOrderHeader
+SET CustomerLoyaltyRate = (
+    SELECT 
+        (CustomerOrders.NumberOfOrders * 1.0 / TotalCustomers.TotalClients) * 100  -- Calcul du taux de fidélité pour chaque client
+    FROM 
+        CustomerOrders, TotalCustomers
+    WHERE Sales.SalesOrderHeader.CustomerID = CustomerOrders.CustomerID
+);
+
+
+
+ 
+
 
 ------------------------------------------------------------------------------------------------------
 SELECT * 
@@ -581,6 +685,30 @@ UPDATE Sales.SalesOrderDetail
 SET LineTotal = OrderQty * UnitPrice
 WHERE LineTotal != OrderQty * UnitPrice;
 
+--------
+ALTER TABLE Sales.SalesOrderDetail
+ADD SalesMarginPercentage DECIMAL(5, 2);  -- La colonne pour le taux de marge, avec deux décimales
+WITH CostAndRevenue AS (
+    SELECT 
+        sod.SalesOrderDetailID, 
+        sod.LineTotal AS Revenue, 
+        p.StandardCost AS Cost
+    FROM 
+        Sales.SalesOrderDetail sod
+    INNER JOIN 
+        Production.Product p
+    ON 
+        sod.ProductID = p.ProductID
+)
+UPDATE sod
+SET sod.SalesMarginPercentage = 
+    ( (car.Revenue - car.Cost) / car.Revenue ) * 100  -- Calcul du pourcentage de marge
+FROM 
+    Sales.SalesOrderDetail sod
+INNER JOIN 
+    CostAndRevenue car
+ON 
+    sod.SalesOrderDetailID = car.SalesOrderDetailID;
 
 
 -------------------------------------------------------------------------------------------------------
@@ -596,143 +724,11 @@ FROM Sales.SalesPerson;
 --cleean
 
 ---------------------------------------------------------------------------------------------------------
-SELECT * 
-FROM Sales.SalesOrderDetail;
-
-SELECT * 
-FROM Sales.SalesOrderDetail 
-WHERE ProductID IS NULL OR OrderQty IS NULL OR LineTotal IS NULL;
-
--- quantite et somme des produits les plus vemdus
-
-SELECT 
-    ProductID, 
-    SUM(OrderQty) AS TotalQuantitySold,
-    SUM(LineTotal) AS TotalRevenue
-FROM sales.SalesOrderDetail
-GROUP BY ProductID
-ORDER BY TotalRevenue DESC;
-
--- l ajout des colones "TotalQuantitySold" et " TotalRevenue"
-ALTER TABLE Sales.SalesOrderDetail
-ADD TotalQuantitySold INT DEFAULT 0, -- Quantité totale vendue (entier)
-    TotalRevenue DECIMAL(18, 2) DEFAULT 0; -- Revenu total (décimal)
-
-UPDATE sod
-SET 
-    sod.TotalQuantitySold = (
-        SELECT SUM(OrderQty)
-        FROM sales.SalesOrderDetail
-        WHERE ProductID = sod.ProductID
-    ),
-    sod.TotalRevenue = (
-        SELECT SUM(LineTotal)
-        FROM sales.SalesOrderDetail
-        WHERE ProductID = sod.ProductID
-    )
-FROM sales.SalesOrderDetail sod;
-
---------------------------------------------------------------------------------
-SELECT * 
-FROM Sales.SalesOrderHeader;
-
-SELECT * 
-FROM Sales.SalesPerson;
-
-SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = 'Sales'  -- Le schéma de la table
-  AND TABLE_NAME = 'SalesPerson';  -- Le nom de la table
-
-  SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = 'Sales'  -- Le schéma de la table
-  AND TABLE_NAME = 'SalesOrderHeader';  -- Le nom de la table
 
 
-  SELECT 
-    soh.SalesPersonID,                    -- Identifiant du commercial
-    COUNT(soh.SalesOrderID) AS NumberOfSales   -- Nombre de ventes pour chaque commercial
-FROM 
-    sales.SalesOrderHeader soh
-            -- Vous pouvez ajouter une condition pour ne considérer que les commandes confirmées
-GROUP BY 
-    soh.SalesPersonID                    -- Grouper les résultats par commercial (SalesPersonID)
-ORDER BY 
-    NumberOfSales DESC; 
 
-CREATE VIEW Sales.SalesPersonKPIs AS
-SELECT 
-    soh.SalesPersonID,                                        -- Identifiant du commercial
-    COUNT(soh.SalesOrderID) AS NumberOfSales,                   -- Nombre de ventes par commercial
-    SUM(soh.TotalDue) AS RevenueGenerated                       -- Revenu généré par commercial (TotalDue correspond au montant total dû)
-FROM 
-    sales.SalesOrderHeader soh
-                                 -- Filtrer sur les commandes confirmées (à ajuster si nécessaire)
-GROUP BY 
-    soh.SalesPersonID;
 
-SELECT * FROM SalesPersonKPIs;
 
-  -----------------------------------------------------------------------------
-  --territory
 
-  SELECT * FROM Sales.SalesTerritory;
---  les revenus actuels par territoire
-  SELECT 
-    Name AS TerritoryName,
-    SalesYTD AS CurrentYearRevenue
-FROM 
-    Sales.SalesTerritory
-ORDER BY 
-    CurrentYearRevenue DESC;
-	-- la croissance des ventes (Année sur Année)
-SELECT 
-    Name AS TerritoryName,
-    SalesYTD,
-    SalesLastYear,
-    ((SalesYTD - SalesLastYear) * 100.0 / SalesLastYear) AS GrowthRate
-FROM 
-    Sales.SalesTerritory
-WHERE 
-    SalesLastYear > 0 -- Éviter les divisions par zéro
-ORDER BY 
-    GrowthRate DESC;
 
--- la contribution au revenu total par territoire
-SELECT 
-    Name AS TerritoryName,
-    SalesYTD,
-    (SalesYTD * 100.0 / SUM(SalesYTD) OVER ()) AS RevenueContributionPercentage
-FROM 
-    Sales.SalesTerritory
-ORDER BY 
-    RevenueContributionPercentage DESC;
-
--- ajout de deux colones GrowthRate ; RevenueContributionPercentage
-ALTER TABLE Sales.SalesTerritory
-ADD 
-    GrowthRate DECIMAL(18, 2),  -- Croissance des Ventes (Année sur Année)
-    RevenueContributionPercentage DECIMAL(18, 2);  -- Contribution au Revenu Total par Territoire
-
--- attribue le resultat de la colone GrowthRate
-	UPDATE Sales.SalesTerritory
-SET 
-    GrowthRate = ((SalesYTD - SalesLastYear) * 100.0 / NULLIF(SalesLastYear, 0))
-WHERE 
-    SalesLastYear > 0;
-
-	-- attribue le resultat de la colone RevenueContributionPercentage 
-WITH TotalSales AS (
-    SELECT SUM(SalesYTD) AS TotalSalesYTD
-    FROM Sales.SalesTerritory
-)
-UPDATE Sales.SalesTerritory
-SET 
-    RevenueContributionPercentage = (SalesYTD * 100.0 / (SELECT TotalSalesYTD FROM TotalSales))
-WHERE 
-    SalesYTD > 0;
-
-SELECT * FROM Sales.Customer;
-SELECT * FROM Sales.SalesOrderHeader;
 

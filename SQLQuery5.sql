@@ -451,70 +451,173 @@ GROUP BY TerritoryID;
 -------------------------------------------------------------------------------------------------------
 SELECT * 
 FROM Sales.SalesOrderHeader;
+-- 1. Ajouter la colonne TotalRevenue dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD TotalRevenue DECIMAL(18, 2);
 
-SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_NAME = 'SalesOrderHeader';
-
+-- 2. Calculer et insérer le chiffre d'affaires total dans la colonne TotalRevenue
+WITH TotalRevenueCalculation AS (
+    SELECT 
+        SalesOrderID,
+        SUM(SubTotal) OVER () AS TotalRevenue -- Calcule la somme de SubTotal pour toutes les lignes
+    FROM 
+        Sales.SalesOrderHeader
+)
 UPDATE Sales.SalesOrderHeader
-SET Comment = 'No Comment'
-WHERE Comment IS NULL;
+SET TotalRevenue = TotalRevenueCalculation.TotalRevenue
+FROM TotalRevenueCalculation
+WHERE Sales.SalesOrderHeader.SalesOrderID = TotalRevenueCalculation.SalesOrderID;
 
-SELECT *
-FROM Sales.SalesOrderHeader
-WHERE [SalesOrderID] IS NULL
-OR [RevisionNumber] IS NULL
-OR [OrderDate] IS NULL
-OR [DueDate] IS NULL
-OR [ShipDate] IS NULL
-OR [Status] IS NULL
-OR [OnlineOrderFlag] IS NULL
-OR [SalesOrderNumber] IS NULL
-OR [PurchaseOrderNumber] IS NULL
-OR [AccountNumber] IS NULL
-OR [CustomerID] IS NULL
-OR [SalesPersonID] IS NULL
-OR [TerritoryID] IS NULL
-OR [BillToAddressID] IS NULL
-OR [ShipToAddressID] IS NULL
-OR [ShipMethodID] IS NULL
-OR [CreditCardID] IS NULL
-OR [CreditCardApprovalCode] IS NULL
-OR [CurrencyRateID] IS NULL
-OR [SubTotal] IS NULL;
-
-UPDATE Sales.SalesOrderHeader
-SET PurchaseOrderNumber = 'N/A'
-WHERE PurchaseOrderNumber IS NULL;
-
-UPDATE Sales.SalesOrderHeader
-SET CreditCardID = '0',  
-    CreditCardApprovalCode = 'N/A' 
-WHERE CreditCardID IS NULL OR CreditCardApprovalCode IS NULL;
-
-SELECT 
-    COUNT(*) AS TotalRecords,
-    COUNT(OrderDate) AS RecordsWithOrderDate,
-    COUNT(CustomerID) AS RecordsWithCustomerID,
-    COUNT(ShipMethodID) AS RecordsWithShipMethod
+-- 3. Vérification des résultats
+SELECT SalesOrderID, SubTotal, TotalRevenue
 FROM Sales.SalesOrderHeader;
 
-SELECT 
-    SalesOrderID, 
-    COUNT(*) AS DuplicateCount 
-FROM Sales.SalesOrderHeader 
-GROUP BY SalesOrderID 
-HAVING COUNT(*) > 1;
+------
+-- Ajouter une nouvelle colonne 'TotalOrders' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD TotalOrders INT;
+-- Calculer le nombre total de commandes et mettre à jour la colonne TotalOrders
+WITH OrderCount AS (
+    SELECT COUNT(SalesOrderID) AS TotalOrders
+    FROM Sales.SalesOrderHeader
+)
+UPDATE Sales.SalesOrderHeader
+SET TotalOrders = (SELECT TotalOrders FROM OrderCount);
 
-SELECT * 
-FROM Sales.SalesOrderHeader 
-WHERE OrderDate IS NULL OR OrderDate > GETDATE();
+----
+-- Ajouter une nouvelle colonne 'AverageOrderValue' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD AverageOrderValue DECIMAL(18, 2);
+-- Calculer la valeur moyenne d'une commande et mettre à jour la colonne AverageOrderValue
+WITH AverageOrderCalculation AS (
+    SELECT 
+        SUM(SubTotal) / COUNT(SalesOrderID) AS AverageOrderValue -- Calcul de la moyenne
+    FROM 
+        Sales.SalesOrderHeader
+)
+UPDATE Sales.SalesOrderHeader
+SET AverageOrderValue = (SELECT AverageOrderValue FROM AverageOrderCalculation);
+-----
+-- Ajouter une nouvelle colonne 'SalesGrowthPercentage' dans la table SalesOrderHeader
+ALTER TABLE Sales.SalesOrderHeader
+ADD SalesGrowthPercentage DECIMAL(18, 2);
+-- 1. Ajouter une colonne pour stocker la croissance des ventes
+ALTER TABLE Sales.SalesOrderHeader
+ADD SalesGrowthPercentage DECIMAL(18, 2);
 
-SELECT * 
-FROM Sales.SalesOrderHeader 
-WHERE SubTotal < 0 
-   OR TaxAmt < 0 
-   OR Freight < 0;
+-- 2. Calcul de la croissance des ventes par mois et mise à jour de la colonne
+WITH SalesPeriod AS (
+    SELECT 
+        YEAR(OrderDate) AS OrderYear,  
+        MONTH(OrderDate) AS OrderMonth,  
+        SUM(SubTotal) AS SalesAmount
+    FROM Sales.SalesOrderHeader
+    GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+),
+SalesGrowthCalculation AS (
+    SELECT 
+        sp1.OrderYear,
+        sp1.OrderMonth,
+        sp1.SalesAmount AS CurrentPeriodSales,
+        COALESCE(sp2.SalesAmount, 0) AS PreviousPeriodSales,
+        CASE 
+            WHEN COALESCE(sp2.SalesAmount, 0) = 0 THEN NULL  -- Eviter la division par zéro
+            ELSE (sp1.SalesAmount - sp2.SalesAmount) / sp2.SalesAmount * 100
+        END AS SalesGrowthPercentage
+    FROM SalesPeriod sp1
+    LEFT JOIN SalesPeriod sp2 
+        ON sp1.OrderYear = sp2.OrderYear 
+        AND sp1.OrderMonth = sp2.OrderMonth + 1  -- Mois précédent
+)
+UPDATE Sales.SalesOrderHeader
+SET SalesGrowthPercentage = (
+    SELECT SalesGrowthPercentage
+    FROM SalesGrowthCalculation
+    WHERE Sales.SalesOrderHeader.OrderDate >= DATEFROMPARTS(SalesGrowthCalculation.OrderYear, SalesGrowthCalculation.OrderMonth, 1)
+    AND Sales.SalesOrderHeader.OrderDate < DATEADD(MONTH, 1, DATEFROMPARTS(SalesGrowthCalculation.OrderYear, SalesGrowthCalculation.OrderMonth, 1))
+);
+--------
+ALTER TABLE Sales.SalesOrderHeader
+ADD ActiveCustomers INT;
+WITH ActiveCustomersCalculation AS (
+    SELECT DISTINCT CustomerID
+    FROM Sales.SalesOrderHeader
+    WHERE OrderDate >= DATEADD(MONTH, -12, GETDATE())  -- Clients ayant passé une commande dans les 12 derniers mois
+)
+UPDATE Sales.SalesOrderHeader
+SET ActiveCustomers = (
+    SELECT COUNT(*) FROM ActiveCustomersCalculation WHERE Sales.SalesOrderHeader.CustomerID = ActiveCustomersCalculation.CustomerID
+);
+
+-----
+ALTER TABLE Sales.SalesOrderHeader
+ADD NumberOfOrders INT;
+
+WITH CustomerOrders AS (
+    SELECT 
+        CustomerID, 
+        COUNT(SalesOrderID) AS NumberOfOrders
+    FROM 
+        Sales.SalesOrderHeader
+    GROUP BY 
+        CustomerID
+)
+UPDATE Sales.SalesOrderHeader
+SET NumberOfOrders = CustomerOrders.NumberOfOrders
+FROM CustomerOrders
+WHERE Sales.SalesOrderHeader.CustomerID = CustomerOrders.CustomerID;
+
+ -----
+ ALTER TABLE Sales.SalesOrderHeader
+DROP COLUMN ActiveCustomers;
+------
+ALTER TABLE Sales.SalesOrderHeader
+ADD CustomerLifetimeValue DECIMAL(18, 2);
+
+WITH CLV_Calculation AS (
+    SELECT 
+        CustomerID,
+        SUM(TotalDue) AS CustomerLifetimeValue
+    FROM 
+        Sales.SalesOrderHeader
+    GROUP BY 
+        CustomerID
+)
+UPDATE Sales.SalesOrderHeader
+SET CustomerLifetimeValue = CLV_Calculation.CustomerLifetimeValue
+FROM CLV_Calculation
+WHERE Sales.SalesOrderHeader.CustomerID = CLV_Calculation.CustomerID;
+-----------------------
+ALTER TABLE Sales.SalesOrderHeader
+ADD CustomerLoyaltyRate DECIMAL(5, 2);
+  
+
+-- Étape 2: Calculer le taux de fidélité
+WITH RecurringCustomers AS (
+    -- Sélectionner les clients récurrents (ayant plus d'une commande)
+    SELECT CustomerID
+    FROM Sales.SalesOrderHeader
+    GROUP BY CustomerID
+    HAVING COUNT(SalesOrderID) > 1
+),
+TotalCustomers AS (
+    -- Sélectionner le nombre total de clients
+    SELECT COUNT(DISTINCT CustomerID) AS TotalCustomerCount
+    FROM Sales.SalesOrderHeader
+)
+-- Mettre à jour la colonne CustomerLoyaltyRate
+UPDATE Sales.SalesOrderHeader
+SET CustomerLoyaltyRate = (
+    -- Calculer le taux de fidélité pour chaque client
+    (SELECT COUNT(DISTINCT CustomerID) FROM RecurringCustomers 
+    WHERE RecurringCustomers.CustomerID = Sales.SalesOrderHeader.CustomerID) * 100.0 
+    / (SELECT TotalCustomerCount FROM TotalCustomers)
+)
+WHERE CustomerID IN (SELECT CustomerID FROM Sales.SalesOrderHeader);
+
+-- Étape 3: Vérifier les résultats
+SELECT CustomerID, CustomerLoyaltyRate
+FROM Sales.SalesOrderHeader;
 
 ------------------------------------------------------------------------------------------------------
 SELECT * 

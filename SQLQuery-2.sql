@@ -1193,3 +1193,100 @@ FROM
     ProductProfit
 GROUP BY
     CategoryName, SubcategoryName, ProductName;
+
+SELECT*FROM sales.SalesOrderHeader;
+SELECT*FROM Production.Product;
+
+CREATE VIEW VentesParClient AS
+SELECT 
+    c.CustomerID,
+    c.AccountNumber AS CustomerAccount,  -- Compte du client
+    soh.TerritoryID AS CustomerRegion,    -- Région géographique (TerritoryID)
+    p.Name AS ProductName,                -- Nom du produit acheté
+    pc.Name AS ProductCategory,           -- Catégorie du produit acheté
+    SUM(soh.TotalDue) AS TotalSpent,      -- Total dépensé par le client
+    COUNT(sod.SalesOrderDetailID) AS TotalProductsPurchased   -- Nombre total de produits achetés
+FROM 
+    sales.Customer c
+JOIN 
+    sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+JOIN 
+    sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+JOIN 
+    production.Product p ON sod.ProductID = p.ProductID
+JOIN 
+    production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+JOIN 
+    production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+GROUP BY 
+    c.CustomerID, c.AccountNumber, soh.TerritoryID, p.Name, pc.Name
+
+
+SELECT*FROM VentesParClient;
+
+
+CREATE VIEW NombreClientsParTerritoire AS
+SELECT 
+    soh.TerritoryID,               -- ID du territoire
+    COUNT(c.CustomerID) AS NombreDeClients  -- Nombre de clients dans chaque territoire
+FROM 
+    sales.Customer c
+JOIN 
+    Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+GROUP BY 
+    soh.TerritoryID;
+
+
+
+CREATE VIEW NombreClientsParTerritoire2 AS
+SELECT 
+    st.Name AS TerritoryName,                -- Nom du territoire
+    COUNT(c.CustomerID) AS NombreDeClients   -- Nombre de clients dans chaque territoire
+FROM 
+    Sales.Customer c
+JOIN 
+    Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+JOIN 
+    Sales.SalesTerritory st ON soh.TerritoryID = st.TerritoryID  -- Joindre la table SalesTerritory pour obtenir le nom du territoire
+GROUP BY 
+    st.Name;                                -- Regrouper par nom du territoire
+SELECT*FROM RepartitionClientsParTypeProduit;
+
+CREATE VIEW RepartitionClientsParTypeProduit AS
+SELECT 
+    c.CustomerID,                          -- ID du client
+    pc.Name AS ProductCategory,             -- Nom du type de produit
+    COUNT(DISTINCT c.CustomerID) AS NombreDeClients   -- Nombre de clients ayant acheté ce type de produit
+FROM 
+    Sales.Customer c
+JOIN 
+     Sales.SalesOrderHeader soh ON c.CustomerID = soh.CustomerID
+JOIN 
+     Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+JOIN 
+    Production.Product p ON sod.ProductID = p.ProductID
+JOIN 
+    Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+JOIN 
+    Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+GROUP BY 
+    c.CustomerID, pc.Name;                  -- Regroupement par client et par type de produit
+
+
+
+  SELECT TOP 10
+    soh.CustomerID,
+     
+    SUM(soh.TotalDue) AS TotalRevenue
+FROM 
+    Sales.SalesOrderHeader soh
+JOIN 
+    Sales.Customer c ON soh.CustomerID = c.CustomerID
+GROUP BY 
+    soh.CustomerID
+ORDER BY 
+    TotalRevenue DESC;
+
+
+ 
+

@@ -864,3 +864,89 @@ JOIN
 ON TotalSalesQuery.CategoryName = SalesGrowthQuery.CategoryName;
 SELECT * 
 FROM Sales.SalesCategoryKPIs;
+
+
+
+CREATE VIEW v_ProductProfitability AS
+SELECT 
+    p.ProductID,
+    p.Name AS ProductName,
+    SUM(sod.LineTotal) AS TotalRevenue,
+    SUM(sod.OrderQty * p.StandardCost) AS TotalCost,
+    (SUM(sod.LineTotal) - SUM(sod.OrderQty * p.StandardCost))  AS Profitability
+FROM 
+    sales.SalesOrderDetail sod
+JOIN 
+    Production.Product p ON sod.ProductID = p.ProductID
+GROUP BY 
+    p.ProductID, p.Name;
+
+SELECT * 
+FROM  Sales.SalesPerson   
+
+
+ CREATE VIEW Sales.Top10Products AS
+
+SELECT TOP 10 
+
+    p.ProductID,
+
+    p.Name AS ProductName,
+
+    SUM(sod.OrderQty) AS TotalQuantitySold,
+
+    SUM(sod.LineTotal) AS TotalRevenue
+
+FROM 
+
+    sales.SalesOrderDetail sod
+
+INNER JOIN 
+
+    production.Product p ON sod.ProductID = p.ProductID
+
+GROUP BY 
+
+    p.ProductID, p.Name
+
+ORDER BY 
+
+    TotalQuantitySold DESC;
+
+SELECT * 
+FROM  ProductProfitability
+
+CREATE VIEW ProductProfitability AS
+WITH ProductProfit AS (
+    SELECT
+        p.ProductID,
+        p.Name AS ProductName,
+        ps.Name AS SubcategoryName,
+        pc.Name AS CategoryName,
+        SUM(sod.LineTotal) AS TotalRevenue,
+        SUM(p.StandardCost * sod.OrderQty) AS TotalCost,
+        (SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty)) AS TotalProfit,
+        ((SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty)) / SUM(sod.LineTotal)) * 100 AS ProfitabilityPercentage
+    FROM
+        Sales.SalesOrderDetail sod
+    INNER JOIN
+        Production.Product p ON sod.ProductID = p.ProductID
+    LEFT JOIN
+        Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+    LEFT JOIN
+        Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+    GROUP BY
+        p.ProductID, p.Name, ps.Name, pc.Name
+)
+SELECT
+    ProductName,
+    SubcategoryName,
+    CategoryName,
+    SUM(TotalRevenue) AS TotalRevenue,
+    SUM(TotalCost) AS TotalCost,
+    SUM(TotalProfit) AS TotalProfit,
+    AVG(ProfitabilityPercentage) AS AvgProfitabilityPercentage
+FROM
+    ProductProfit
+GROUP BY
+    CategoryName, SubcategoryName, ProductName;

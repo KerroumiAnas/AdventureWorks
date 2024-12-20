@@ -455,7 +455,8 @@ FROM Sales.SalesTerritory
 GROUP BY TerritoryID;
 
 -------------------------------------------------------------------------------------------------------
-
+SELECT * 
+FROM Sales.SalesOrderHeader;
 -- 1. Ajouter la colonne TotalRevenue dans la table SalesOrderHeader
 ALTER TABLE Sales.SalesOrderHeader
 ADD TotalRevenue DECIMAL(18, 2);

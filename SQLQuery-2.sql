@@ -673,7 +673,7 @@ FROM
 GROUP BY 
     soh.SalesPersonID;
 
-SELECT * FROM SalesPersonKPIs;
+SELECT * FROM sales.SalesPersonKPIs;
 
   -----------------------------------------------------------------------------
   --territory
@@ -980,3 +980,216 @@ GROUP BY
 SELECT*FROM ProductProfitability;
 
 
+
+
+SELECT
+    pc.Name AS CategoryName,
+    SUM(sod.OrderQty) AS TotalQuantitySold,
+    SUM(sod.LineTotal) AS TotalSales
+FROM
+    Sales.SalesOrderDetail sod
+JOIN
+    Production.Product p ON sod.ProductID = p.ProductID
+JOIN
+    Production.ProductCategory pc ON p.ProductSubcategoryID = pc.ProductCategoryID
+GROUP BY
+    pc.Name;
+-------Marge bénéficiaire par catégorie
+SELECT
+    pc.Name AS CategoryName,
+    SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty) AS Profit
+FROM
+    Sales.SalesOrderDetail sod
+JOIN
+    Production.Product p ON sod.ProductID = p.ProductID
+JOIN
+    Production.ProductCategory pc ON p.ProductSubcategoryID = pc.ProductCategoryID
+GROUP BY
+    pc.Name;
+
+------ Croissance des ventes par catégorie
+SELECT
+    pc.Name AS CategoryName,
+    SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END) AS SalesJanuary,
+    SUM(CASE WHEN MONTH(soh.OrderDate) = 2 THEN sod.LineTotal ELSE 0 END) AS SalesFebruary,
+    (SUM(CASE WHEN MONTH(soh.OrderDate) = 2 THEN sod.LineTotal ELSE 0 END) - 
+     SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END)) / 
+     NULLIF(SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END), 0) * 100 AS GrowthPercentage
+FROM
+    Sales.SalesOrderDetail sod
+JOIN
+    Production.Product p ON sod.ProductID = p.ProductID
+JOIN
+    Production.ProductCategory pc ON p.ProductSubcategoryID = pc.ProductCategoryID
+JOIN
+    Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
+GROUP BY
+    pc.Name;
+  
+CREATE TABLE Sales.SalesCategoryKPIs (
+    CategoryName NVARCHAR(100),
+    TotalQuantitySold INT,
+    TotalSales DECIMAL(18, 2),
+    Profit DECIMAL(18, 2),
+    SalesJanuary DECIMAL(18, 2),
+    SalesFebruary DECIMAL(18, 2),
+    GrowthPercentage DECIMAL(10, 2)
+);
+ -- Étape 2 : Insérer les données
+INSERT INTO Sales.SalesCategoryKPIs (CategoryName, TotalQuantitySold, TotalSales, Profit, SalesJanuary, SalesFebruary, GrowthPercentage)
+SELECT 
+    TotalSalesQuery.CategoryName,
+    TotalSalesQuery.TotalQuantitySold,
+    TotalSalesQuery.TotalSales,
+    ProfitQuery.Profit,
+    SalesGrowthQuery.SalesJanuary,
+    SalesGrowthQuery.SalesFebruary,
+    SalesGrowthQuery.GrowthPercentage
+FROM 
+    (
+        -- Sous-requête pour Total Sales et Quantity Sold
+        SELECT 
+            pc.Name AS CategoryName,
+            SUM(sod.OrderQty) AS TotalQuantitySold,
+            SUM(sod.LineTotal) AS TotalSales
+        FROM 
+            Sales.SalesOrderDetail sod
+        JOIN 
+            Production.Product p ON sod.ProductID = p.ProductID
+        JOIN 
+            Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+        JOIN 
+            Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+        GROUP BY 
+            pc.Name
+    ) AS TotalSalesQuery
+JOIN 
+    (
+        -- Sous-requête pour Profit
+        SELECT 
+            pc.Name AS CategoryName,
+            SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty) AS Profit
+        FROM 
+            Sales.SalesOrderDetail sod
+        JOIN 
+            Production.Product p ON sod.ProductID = p.ProductID
+        JOIN 
+            Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+        JOIN 
+            Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+        GROUP BY 
+            pc.Name
+    ) AS ProfitQuery 
+ON TotalSalesQuery.CategoryName = ProfitQuery.CategoryName
+JOIN 
+    (
+        -- Sous-requête pour Sales Growth
+        SELECT 
+            pc.Name AS CategoryName,
+            SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END) AS SalesJanuary,
+            SUM(CASE WHEN MONTH(soh.OrderDate) = 2 THEN sod.LineTotal ELSE 0 END) AS SalesFebruary,
+            (SUM(CASE WHEN MONTH(soh.OrderDate) = 2 THEN sod.LineTotal ELSE 0 END) - 
+             SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END)) / 
+             NULLIF(SUM(CASE WHEN MONTH(soh.OrderDate) = 1 THEN sod.LineTotal ELSE 0 END), 0) * 100 AS GrowthPercentage
+        FROM 
+            Sales.SalesOrderDetail sod
+        JOIN 
+            Production.Product p ON sod.ProductID = p.ProductID
+        JOIN 
+            Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+        JOIN 
+            Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+        JOIN 
+            Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
+        GROUP BY 
+            pc.Name
+    ) AS SalesGrowthQuery
+ON TotalSalesQuery.CategoryName = SalesGrowthQuery.CategoryName;
+SELECT * 
+FROM Sales.SalesCategoryKPIs;
+
+
+
+CREATE VIEW v_ProductProfitability AS
+SELECT 
+    p.ProductID,
+    p.Name AS ProductName,
+    SUM(sod.LineTotal) AS TotalRevenue,
+    SUM(sod.OrderQty * p.StandardCost) AS TotalCost,
+    (SUM(sod.LineTotal) - SUM(sod.OrderQty * p.StandardCost))  AS Profitability
+FROM 
+    sales.SalesOrderDetail sod
+JOIN 
+    Production.Product p ON sod.ProductID = p.ProductID
+GROUP BY 
+    p.ProductID, p.Name;
+
+SELECT * 
+FROM  Sales.SalesPerson   
+
+
+ CREATE VIEW Sales.Top10Products AS
+
+SELECT TOP 10 
+
+    p.ProductID,
+
+    p.Name AS ProductName,
+
+    SUM(sod.OrderQty) AS TotalQuantitySold,
+
+    SUM(sod.LineTotal) AS TotalRevenue
+
+FROM 
+
+    sales.SalesOrderDetail sod
+
+INNER JOIN 
+
+    production.Product p ON sod.ProductID = p.ProductID
+
+GROUP BY 
+
+    p.ProductID, p.Name
+
+ORDER BY 
+
+    TotalQuantitySold DESC;
+
+SELECT * 
+FROM  ProductProfitability
+
+CREATE VIEW ProductProfitability AS
+WITH ProductProfit AS (
+    SELECT
+        p.ProductID,
+        p.Name AS ProductName,
+        ps.Name AS SubcategoryName,
+        pc.Name AS CategoryName,
+        SUM(sod.LineTotal) AS TotalRevenue,
+        SUM(p.StandardCost * sod.OrderQty) AS TotalCost,
+        (SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty)) AS TotalProfit,
+        ((SUM(sod.LineTotal) - SUM(p.StandardCost * sod.OrderQty)) / SUM(sod.LineTotal)) * 100 AS ProfitabilityPercentage
+    FROM
+        Sales.SalesOrderDetail sod
+    INNER JOIN
+        Production.Product p ON sod.ProductID = p.ProductID
+    LEFT JOIN
+        Production.ProductSubcategory ps ON p.ProductSubcategoryID = ps.ProductSubcategoryID
+    LEFT JOIN
+        Production.ProductCategory pc ON ps.ProductCategoryID = pc.ProductCategoryID
+    GROUP BY
+        p.ProductID, p.Name, ps.Name, pc.Name
+)
+SELECT
+    ProductName,
+    SubcategoryName,
+    CategoryName,
+    SUM(TotalRevenue) AS TotalRevenue,
+    SUM(TotalCost) AS TotalCost,
+    SUM(TotalProfit) AS TotalProfit,
+    AVG(ProfitabilityPercentage) AS AvgProfitabilityPercentage
+FROM
+    ProductProfit
+GROUP BY
+    CategoryName, SubcategoryName, ProductName;

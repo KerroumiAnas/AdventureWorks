@@ -1222,7 +1222,7 @@ GROUP BY
     c.CustomerID, c.AccountNumber, soh.TerritoryID, p.Name, pc.Name
 
 
-SELECT*FROM VentesParClient;
+SELECT*FROM Sales.sal;
 
 
 CREATE VIEW NombreClientsParTerritoire AS
@@ -1287,6 +1287,42 @@ GROUP BY
 ORDER BY 
     TotalRevenue DESC;
 
+	
+ 
+CREATE VIEW PromotionEffectiveness AS
+SELECT
+    SUM(CASE WHEN sod.SpecialOfferID IS NOT NULL THEN sod.LineTotal ELSE 0 END) AS RevenueWithPromotion,
+    SUM(sod.LineTotal) AS TotalRevenue,
+    (SUM(CASE WHEN sod.SpecialOfferID IS NOT NULL THEN sod.LineTotal ELSE 0 END) * 100.0 / SUM(sod.LineTotal)) AS PromotionEffectivenessPercentage
+FROM
+    sales.SalesOrderDetail sod
+LEFT JOIN sales.SpecialOfferProduct sop ON sod.ProductID = sop.ProductID AND sod.SpecialOfferID = sop.SpecialOfferID
+LEFT JOIN sales.SpecialOffer sp ON sop.SpecialOfferID = sp.SpecialOfferID;
+
+
+
+CREATE VIEW Sales.PromotionKPIs AS
+SELECT 
+    SO.SpecialOfferID,
+    SO.Description AS SpecialOfferDescription,
+    SO.Category AS PromotionCategory,
+    SO.Type AS PromotionType,
+    SO.StartDate,
+    SO.EndDate,
+    SUM(SOD.LineTotal) AS TotalRevenueFromPromotion,
+    SUM(SOD.OrderQty) AS TotalQuantitySoldInPromotion,
+    COUNT(DISTINCT SOD.SalesOrderID) AS TotalOrdersInPromotion,
+    (SUM(SOD.LineTotal) * 100.0 / NULLIF(SUM(SOD.LineTotal + SOD.UnitPrice * SOD.OrderQty - SOD.LineTotal), 0)) AS PromotionEfficiencyPercentage,
+    RANK() OVER (ORDER BY SUM(SOD.LineTotal) DESC) AS RankByRevenue
+FROM 
+    Sales.SpecialOffer AS SO
+INNER JOIN 
+    Sales.SpecialOfferProduct AS SOP ON SO.SpecialOfferID = SOP.SpecialOfferID
+INNER JOIN 
+    Sales.SalesOrderDetail AS SOD ON SOP.ProductID = SOD.ProductID AND SOP.SpecialOfferID = SOD.SpecialOfferID
+GROUP BY 
+    SO.SpecialOfferID, SO.Description, SO.Category, SO.Type, SO.StartDate, SO.EndDate;
 
  
+SELECT*FROM Sales.PromotionKPIs;
 

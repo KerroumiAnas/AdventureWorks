@@ -1,0 +1,184 @@
+"ProductName","SalesYear","TotalVolume","TotalRevenue","KPI","Prediction (KPI)","Prediction (KPI) (Confidence)"
+"LL Road Frame - Black, 60",2011,1,"178,58","False","False",0.9929668191734673
+"HL Mountain Frame - Black, 44",2011,9,"7287,84","False","False",0.9929668191734673
+"Road-450 Red, 48",2011,58,"50738,05","False","False",0.9929668191734673
+"Road-650 Red, 58",2011,73,"33137,25","False","False",0.9929668191734673
+"Road-650 Black, 48",2011,74,"32158,52","False","False",0.9929668191734673
+"HL Mountain Frame - Silver, 46",2011,74,"53472,02","False","False",0.9929668191734673
+"HL Mountain Frame - Silver, 48",2011,90,"73683,00","False","False",0.9929668191734673
+"LL Road Frame - Black, 58",2011,112,"20001,05","False","False",0.9929668191734673
+"ML Road Frame - Red, 48",2011,147,"52464,01","False","False",0.9929668191734673
+"Road-650 Red, 52",2011,170,"74104,41","False","False",0.9929668191734673
+"Road-450 Red, 44",2011,180,"157462,92","False","False",0.9020281900573476
+"LL Road Frame - Black, 52",2011,181,"32323,12","False","False",0.9020281900573476
+"LL Road Frame - Red, 60",2011,181,"33292,81","False","False",0.9020281900573476
+"Road-450 Red, 52",2011,389,"340294,87","True","True",0.7513339940523815
+"HL Mountain Frame - Black, 44",2012,8,"6478,08","False","False",0.9946681412045085
+"ML Road Rear Wheel",2012,64,"10574,78","False","False",0.9946681412045085
+"LL Road Frame - Black, 44",2012,112,"20531,43","False","False",0.9946681412045085
+"LL Fork",2012,137,"12183,68","False","False",0.9946681412045085
+"HL Mountain Frame - Silver, 42",2012,153,"113635,27","False","False",0.9946681412045085
+"Half-Finger Gloves, L",2012,180,"2543,20","False","False",0.9839681776881802
+"HL Mountain Front Wheel",2012,181,"32603,35","False","False",0.9839681776881802
+"HL Mountain Frame - Silver, 46",2012,224,"165568,16","False","False",0.9747888520827748
+"Road-450 Red, 58",2012,272,"237594,05","False","False",0.970530528903324
+"Mountain-100 Silver, 38",2012,291,"542128,41","False","False",0.970530528903324
+"Road-150 Red, 56",2012,301,"829442,99","False","False",0.9627341836198001
+"HL Fork",2012,315,"43309,35","False","False",0.9180018583350368
+"ML Road Frame-W - Yellow, 48",2012,333,"108042,75","False","False",0.9379826721301314
+"ML Road Frame-W - Yellow, 38",2012,335,"108691,65","False","False",0.820572418300158
+"Half-Finger Gloves, S",2012,349,"4930,99","False","False",0.6163076197076872
+"Road-250 Red, 58",2012,351,"565024,69","False","False",0.622473610929023
+"LL Road Frame - Black, 58",2012,389,"71128,73","False","False",0.7744462685249219
+"Road-650 Black, 62",2012,432,"206312,27","True","True",0.5676704593157257
+"Road-250 Red, 52",2012,437,"728606,97","True","True",0.5676704593157257
+"HL Mountain Frame - Silver, 38",2012,442,"327017,53","True","False",0.6832518808157173
+"Mountain-300 Black, 48",2012,510,"330196,14","True","True",0.791431301574111
+"ML Road Frame-W - Yellow, 44",2012,563,"182526,27","True","False",0.5940404446537701
+"Road-550-W Yellow, 38",2012,567,"351893,89","True","True",0.7069964318584752
+"LL Road Rear Wheel",2012,592,"39983,09","False","True",0.7788249768466693
+"Road-250 Red, 44",2012,610,"975312,02","True","True",0.8049210093024016
+"LL Road Frame - Red, 60",2012,630,"125114,75","True","True",0.8049210093024016
+"Mountain-200 Black, 46",2012,638,"866235,76","True","True",0.8049210093024016
+"Road-650 Black, 44",2012,684,"322356,98","True","True",0.6287782916385849
+"Mountain-200 Silver, 38",2012,722,"966358,70","True","True",0.8145575888189681
+"Mountain-200 Silver, 42",2012,789,"1044616,93","True","False",0.7408552822083136
+"Mountain-200 Black, 38",2012,888,"1143068,93","True","True",0.8080788884580635
+"Long-Sleeve Logo Jersey, XL",2012,1049,"30174,74","False","True",0.8754423523643728
+"Long-Sleeve Logo Jersey, M",2012,1101,"31647,53","False","True",0.8754423523643728
+"Men's Bib-Shorts, M",2012,1125,"60240,21","False","True",0.8754423523643728
+"Road-650 Red, 60",2012,1384,"634361,15","True","False",0.8900329525076798
+"Full-Finger Gloves, M",2012,1526,"33763,61","False","False",0.8900329525076798
+"ML Mountain Frame-W - Silver, 38",2013,7,"1529,18","False","False",0.9938488928888092
+"LL Road Seat/Saddle",2013,10,"162,72","False","False",0.9938488928888092
+"LL Touring Frame - Blue, 62",2013,15,"3000,78","False","False",0.9938488928888092
+"LL Touring Frame - Blue, 44",2013,25,"5001,30","False","False",0.9938488928888092
+"HL Touring Frame - Blue, 50",2013,89,"53608,79","False","False",0.9938488928888092
+"LL Touring Seat/Saddle",2013,91,"1480,75","False","False",0.9938488928888092
+"Classic Vest, L",2013,97,"5854,70","False","False",0.9938488928888092
+"LL Road Handlebars",2013,102,"2725,85","False","False",0.9938488928888092
+"HL Road Seat/Saddle",2013,116,"3663,74","False","False",0.9938488928888092
+"Road-650 Red, 58",2013,128,"69529,51","False","False",0.9938488928888092
+"Road-650 Black, 48",2013,135,"71972,44","False","False",0.9938488928888092
+"LL Touring Frame - Blue, 54",2013,144,"28807,49","False","False",0.9938488928888092
+"HL Mountain Frame - Silver, 42",2013,147,"119009,21","False","False",0.9938488928888092
+"Touring-3000 Blue, 62",2013,154,"69595,31","False","False",0.9938488928888092
+"LL Touring Frame - Yellow, 50",2013,159,"31808,27","False","False",0.9938488928888092
+"ML Mountain Frame - Black, 38",2013,160,"33480,96","False","False",0.9938488928888092
+"ML Mountain Frame-W - Silver, 46",2013,160,"34952,64","False","False",0.9938488928888092
+"Men's Bib-Shorts, L",2013,161,"8693,03","False","False",0.9938488928888092
+"HL Road Front Wheel",2013,164,"32477,90","False","False",0.9938488928888092
+"Mountain-500 Black, 52",2013,165,"57130,94","False","False",0.9938488928888092
+"LL Mountain Front Wheel",2013,171,"6232,44","False","False",0.9938488928888092
+"LL Road Frame - Red, 60",2013,185,"37525,84","False","False",0.988187994268973
+"ML Mountain Frame - Black, 44",2013,189,"39549,38","False","False",0.9694327689657936
+"ML Headset",2013,209,"12778,07","False","False",0.9711906751758398
+"Rear Brakes",2013,213,"13610,70","False","False",0.9711906751758398
+"Touring-1000 Yellow, 54",2013,214,"332339,36","False","False",0.9637142072923968
+"HL Road Frame - Red, 44",2013,217,"182321,05","False","False",0.9637142072923968
+"HL Road Frame - Red, 62",2013,217,"182321,05","False","False",0.9637142072923968
+"Mountain-400-W Silver, 46",2013,227,"124026,40","False","False",0.9738853745845093
+"Road-650 Black, 44",2013,229,"113032,44","False","False",0.9615712078340799
+"Mountain-400-W Silver, 42",2013,230,"124349,58","False","False",0.9665021537154023
+"Mountain-300 Black, 40",2013,234,"151393,00","False","False",0.9665021537154023
+"Rear Derailleur",2013,239,"17417,36","False","False",0.9768296113899152
+"LL Mountain Frame - Silver, 44",2013,250,"39607,50","False","False",0.9718931287854783
+"LL Bottom Bracket",2013,253,"8195,68","False","False",0.9378987246586568
+"HL Mountain Frame - Silver, 46",2013,260,"206014,69","False","False",0.9453959653341037
+"ML Mountain Frame - Black, 48",2013,288,"60230,85","False","False",0.9621160761875805
+"Cable Lock",2013,314,"4704,00","False","False",0.8631705658297804
+"Mountain-500 Silver, 40",2013,315,"110399,05","False","False",0.8631705658297804
+"Minipump",2013,337,"4041,98","False","False",0.6779470563647686
+"Mountain-500 Silver, 52",2013,350,"124749,79","True","True",0.6495342926549692
+"LL Road Frame - Black, 58",2013,360,"70521,90","True","False",0.8905751848074962
+"HL Bottom Bracket",2013,374,"27262,36","False","True",0.7989436237607446
+"Men's Sports Shorts, M",2013,392,"14100,05","False","True",0.8454019379472022
+"Touring-1000 Blue, 50",2013,399,"640361,20","True","True",0.8454019379472022
+"Mountain-400-W Silver, 40",2013,415,"210024,60","True","True",0.6878628056852908
+"Road-650 Red, 48",2013,419,"205887,22","True","True",0.6473276499049847
+"Road-650 Red, 62",2013,420,"204329,07","True","True",0.6473276499049847
+"ML Road Frame-W - Yellow, 48",2013,435,"150059,38","True","True",0.6874349255913662
+"ML Road Frame-W - Yellow, 38",2013,437,"150740,73","True","True",0.6874349255913662
+"LL Mountain Frame - Black, 44",2013,449,"67238,47","True","True",0.6654404539260746
+"Men's Bib-Shorts, M",2013,485,"25981,91","False","False",0.736742848556608
+"Road-650 Black, 52",2013,493,"238490,92","True","False",0.736742848556608
+"Road-650 Red, 44",2013,504,"242914,82","True","True",0.8360575881288902
+"Touring-2000 Blue, 60",2013,523,"400293,08","True","True",0.5566662287141346
+"LL Road Tire",2013,524,"11260,76","False","True",0.5566662287141346
+"HL Mountain Pedal",2013,542,"26294,21","False","True",0.6527248054695007
+"Touring-3000 Blue, 50",2013,555,"229000,13","True","True",0.5784588155839996
+"Road-350-W Yellow, 42",2013,567,"643025,25","True","True",0.7643086346799884
+"Women's Tights, S",2013,595,"26592,95","False","True",0.8255540331832588
+"LL Road Pedal",2013,609,"14795,05","False","False",0.6956626876370837
+"Road-250 Black, 52",2013,613,"1016189,27","True","True",0.8247919744329191
+"ML Mountain Frame-W - Silver, 40",2013,621,"135303,13","True","True",0.8247919744329191
+"Touring-1000 Blue, 46",2013,637,"974488,61","True","True",0.8247919744329191
+"Touring-2000 Blue, 54",2013,665,"502121,80","True","False",0.5937540602093995
+"Full-Finger Gloves, M",2013,677,"15112,80","False","True",0.7196471190982905
+"Women's Tights, L",2013,687,"30717,40","False","True",0.6451936395868793
+"Touring-1000 Yellow, 60",2013,717,"942780,48","True","True",0.8500404562226217
+"Half-Finger Gloves, L",2013,726,"12652,93","False","True",0.8500404562226217
+"Road-550-W Yellow, 38",2013,872,"628375,59","True","True",0.547323773440395
+"Road-350-W Yellow, 40",2013,947,"1032466,91","True","True",0.8144768811729749
+"Mountain Bottle Cage",2013,1006,"10049,94","False","True",0.7126976885371674
+"Mountain-200 Silver, 46",2013,1033,"1658577,42","True","True",0.6397277365381265
+"Racing Socks, M",2013,1057,"6280,77","False","True",0.8800116187245733
+"Fender Set - Mountain",2013,1088,"23914,24","False","True",0.8800116187245733
+"Road Tire Tube",2013,1220,"4867,80","False","False",0.6241479905592638
+"Short-Sleeve Classic Jersey, S",2013,1366,"48635,27","False","True",0.810561297733594
+"Mountain-200 Black, 38",2013,1470,"2216245,60","True","False",0.817557994268253
+"Mountain Tire Tube",2013,1594,"7954,06","False","True",0.7408525054062096
+"Hitch Rack - 4-Bike",2013,2137,"157873,20","True","False",0.6989084842199776
+"Sport-100 Helmet, Blue",2013,3088,"77053,34","True","True",0.9563782765848492
+"Water Bottle - 30 oz.",2013,3913,"15815,36","False","False",0.9047208982885778
+"Road-650 Black, 58",2014,1,"563,75","False","False",0.9919100763746544
+"Women's Tights, S",2014,2,"97,49","False","False",0.9919100763746544
+"Road-650 Red, 44",2014,3,"1691,26","False","False",0.9919100763746544
+"ML Touring Seat/Saddle",2014,5,"117,42","False","False",0.9919100763746544
+"Road-650 Red, 60",2014,6,"3382,52","False","False",0.9919100763746544
+"Touring Pedal",2014,11,"534,53","False","False",0.9919100763746544
+"Rear Brakes",2014,33,"2108,70","False","False",0.9919100763746544
+"HL Touring Frame - Blue, 46",2014,33,"19877,42","False","False",0.9919100763746544
+"HL Road Frame - Black, 44",2014,44,"37791,60","False","False",0.9919100763746544
+"HL Road Frame - Red, 44",2014,44,"37791,60","False","False",0.9919100763746544
+"HL Touring Handlebars",2014,53,"2911,93","False","False",0.9919100763746544
+"LL Touring Frame - Yellow, 50",2014,69,"13803,59","False","False",0.9919100763746544
+"LL Road Frame - Black, 58",2014,79,"15984,23","False","False",0.9919100763746544
+"LL Touring Frame - Blue, 50",2014,86,"17204,47","False","False",0.9919100763746544
+"HL Mountain Frame - Silver, 46",2014,91,"74501,70","False","False",0.9919100763746544
+"LL Mountain Frame - Silver, 52",2014,109,"17268,87","False","False",0.9919100763746544
+"LL Mountain Seat/Saddle",2014,111,"1800,23","False","False",0.9919100763746544
+"ML Road Frame-W - Yellow, 38",2014,123,"43898,45","False","False",0.9919100763746544
+"HL Touring Seat/Saddle",2014,125,"3948,00","False","False",0.9919100763746544
+"LL Mountain Frame - Silver, 40",2014,127,"20120,61","False","False",0.9919100763746544
+"HL Touring Frame - Yellow, 60",2014,128,"77100,29","False","False",0.9919100763746544
+"LL Mountain Pedal",2014,129,"3133,93","False","False",0.9919100763746544
+"ML Mountain Seat/Saddle",2014,155,"3640,02","False","False",0.9919100763746544
+"Mountain-400-W Silver, 46",2014,174,"103419,46","False","True",0.8079127269364854
+"LL Mountain Frame - Black, 44",2014,176,"26377,82","False","True",0.8079127269364854
+"HL Crankset",2014,192,"46654,85","True","True",0.8128264710456503
+"ML Mountain Handlebars",2014,199,"7393,25","False","True",0.8128264710456503
+"ML Road Pedal",2014,208,"7748,83","False","False",0.5066884383007462
+"Road-350-W Yellow, 44",2014,227,"323528,30","True","False",0.501445704918585
+"Chain",2014,241,"2926,70","False","False",0.7943566131086041
+"Touring-3000 Blue, 54",2014,241,"115064,25","True","False",0.7943566131086041
+"Touring-1000 Yellow, 50",2014,259,"446774,72","True","False",0.7491901919885733
+"Touring-3000 Blue, 50",2014,286,"132175,42","True","True",0.8304852843564218
+"Road-550-W Yellow, 48",2014,314,"257264,50","True","True",0.7935931732488953
+"Touring-2000 Blue, 54",2014,345,"272588,04","True","True",0.9172471772681668
+"Touring-1000 Blue, 46",2014,365,"617903,26","True","True",0.9243240314237415
+"Half-Finger Gloves, L",2014,370,"7719,25","False","True",0.914054464521836
+"Women's Mountain Shorts, M",2014,393,"21150,98","False","True",0.8825615753240479
+"LL Mountain Tire",2014,427,"10670,73","False","True",0.7086912966761848
+"Long-Sleeve Logo Jersey, XL",2014,438,"17036,59","False","True",0.7189005743608468
+"Mountain-200 Silver, 42",2014,441,"798447,76","True","True",0.7189005743608468
+"Touring Tire",2014,493,"14292,07","False","False",0.7596526116760012
+"Mountain-200 Black, 42",2014,513,"910606,13","True","True",0.8181691770447529
+"Long-Sleeve Logo Jersey, M",2014,627,"23554,29","False","True",0.8031495276661956
+"Classic Vest, M",2014,696,"29074,11","False","True",0.527655171413327
+"Half-Finger Gloves, M",2014,742,"13500,85","False","False",0.8427942860182984
+"Touring Tire Tube",2014,774,"3862,26","False","False",0.7886948442151794
+"Bike Wash - Dissolver",2014,1154,"6823,49","False","False",0.5936580100078536
+"Classic Vest, S",2014,1395,"53741,96","True","False",0.8593866967678598
+"Sport-100 Helmet, Black",2014,1716,"50346,76","True","True",0.7218142036129923
+"Water Bottle - 30 oz.",2014,2902,"12917,61","False","True",0.943474640039412
